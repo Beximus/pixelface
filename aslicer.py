@@ -2,6 +2,7 @@ import image_slicer
 from image_slicer import join
 import os, sys
 from PIL import Image as imcon
+from PIL import ImageDraw
 from matplotlib import image as img
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -76,7 +77,6 @@ def joinUp():
 # CONVERTS PNG TILES INTO JPGS FOR REUNIFICATION
 
 def makejpgimage(picturepath,startpath,newname):
-    #"/Users/campberebe3/Desktop/averageface/CutFaces/Face342/slice_01_01.png"
     im = imcon.open(picturepath)
     newim = imcon.new("RGB",im.size,(255,255,255))
     newim.paste(im)
@@ -84,7 +84,7 @@ def makejpgimage(picturepath,startpath,newname):
     newim.save(newpath)
     os.remove(picturepath)
 
-# UNFINISHED FINDS DOMINANT COLOR OF GIVEN QUADRANT
+# FINDS DOMINANT COLOR AND FILLS TILE WITH THAT COLOR
 
 def findDominantColor(picture):
     image = img.imread(picture)
@@ -97,48 +97,44 @@ def findDominantColor(picture):
             temp_r, temp_g, temp_b = pixel
             r.append(temp_r)
             g.append(temp_g)
-            b.append(temp_b)
-                
+            b.append(temp_b)              
     df = pd.DataFrame({'red': r,'blue': b,'green': g})
-
     df['scaled_red'] = whiten(df['red'])
     df['scaled_blue'] = whiten(df['blue'])
     df['scaled_green'] = whiten(df['green'])
-
     df.sample(n = 10)
-
     cluster_centers, distortion= kmeans(df[['scaled_red', 'scaled_green', 'scaled_blue']], 1)
-    print(cluster_centers)
-
     colors = []
     r_std, g_std, b_std = df[['red', 'green', 'blue']].std()
-
-    print(r_std)
-    print(g_std)
-    print(b_std)
     for cluster_center in cluster_centers:
         scaled_r, scaled_g, scaled_b = cluster_center
         colors.append((scaled_r*r_std/255,scaled_g*g_std/255,scaled_b*b_std/255))
-    # plt.imshow([colors])
-    # plt.show()
     print(colors)
+    colorvals = colors[0]
+    rgbr = int(colorvals[0] *255)
+    rgbg = int(colorvals[1] *255)
+    rgbb = int(colorvals[2] *255)
     sizer = imcon.open(picture)
     width,height = sizer.size
+    draw = ImageDraw.Draw(sizer)
+    draw.rectangle((0,0,width,height),fill=(rgbr,rgbg,rgbb))
+    sizer.save(picture)
     
 
-# COMBINE THINGS TO MAKE THE PIXELS
+# COMBINE THINGS TO MAKE THE PIXELS into JPG IMAGES
 
 def makeNewColors():
     for file in outputs:
         if not file.startswith('.'):
             imagepathstart = outpath +"/"+str(file)
             imagepathlist = montageList(imagepathstart)
-            print("\nThis folder contains:")
             for path in imagepathlist:
                 newImageName = os.path.splitext(os.path.basename(path))
                 newImageName = str(newImageName[0])+".jpg"
-                print(newImageName)
-                makejpgimage(path,imagepathstart,newImageName)
+                # makejpgimage(path,imagepathstart,newImageName)
+                finalizedpath = str(imagepathstart+"/"+newImageName)
+                print(finalizedpath)
+                findDominantColor(finalizedpath)
                 
 
 
@@ -146,10 +142,10 @@ def dothing():
     # makeFolders()
     # startCutting()
     # joinUp()
-    findDominantColor("/Users/campberebe3/Desktop/averageface/CutFaces/Face394/slice_01_14.jpg")
+    # findDominantColor("/Users/campberebe3/Desktop/averageface/CutFaces/Face394/slice_01_14.jpg")
     # findDominantColor('faceest.jpg')
     # makejpgimage("/Users/campberebe3/Desktop/averageface/CutFaces/Face342/slice_01_01.png","slice_01_01.png")
-    # makeNewColors()
+    makeNewColors()
 
 
 dothing()
