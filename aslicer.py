@@ -2,7 +2,7 @@ import image_slicer
 from image_slicer import join
 import os, sys
 from PIL import Image as imcon
-from PIL import ImageDraw
+from PIL import ImageDraw,ImageEnhance
 from matplotlib import image as img
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -15,30 +15,43 @@ import cv2
 
 startpath = "/Users/campberebe3/Desktop/averageface/CuttingFaces"
 outpath = "/Users/campberebe3/Desktop/averageface/CutFaces"
+gridoutpath = "/Users/campberebe3/Desktop/averageface/Grids"
 
 directory = os.listdir(startpath)
 outputs = os.listdir(outpath)
 
-# SPLITS UP THE IMAGE INTO 16 X 16 GRID
+# SPLITS UP THE IMAGE INTO 32x32 GRID
 
-def startCutting():
+def startCutting(startpath,outpath,gridoutpath,directory,outputs):
     for file in directory:
         if not file.startswith('.'):
             newFolderName = os.path.splitext(file)[0]
             folderpath = outpath+"/"+newFolderName
             inputpath = startpath+"/"+file
             outputpath = folderpath
-            tiles = image_slicer.slice(inputpath,256,save=False)
+            tiles = image_slicer.slice(inputpath,1024,save=False)
             image_slicer.save_tiles(tiles,directory=outputpath,prefix='slice',format='png')
+        print("cut")
+
+def hicontrast():
+    for file in directory:
+        if not file.startswith('.'):
+            picpath = startpath +"/"+file
+            pic = imcon.open(picpath)
+            enhancer = ImageEnhance.Contrast(pic)
+            image_output = enhancer.enhance(2)
+            image_output.save(picpath)
+            print(pic)
     
 # MAKES AS MANY FOLDERS AS THERE ARE IMAGES IN THE CUTTING FACES FOLDER    
 
-def makeFolders():
+def makeFolders(startpath,outpath,gridoutpath,directory,outputs):
     for picture in directory:
         if not picture.startswith('.'):
             newFolderName = os.path.splitext(picture)[0]
             folderpath = outpath+"/"+newFolderName
             os.mkdir(folderpath)
+        print("made folder")
 
 # MAKES A LIST OF IMAGES IN A GIVEN FOLDER (FOLDERPATH)
 
@@ -50,29 +63,6 @@ def montageList(filePath):
         currentPicture = folderPath+"/"+item
         tileList.append(currentPicture)
     return tileList
-
-# NOT WORKING CURRENTLY  - WILL REJOIN PIXELS INTO SINGLE IMAGE
-
-def joinUp():
-    root = outputs
-    for folder in root:
-        if not folder.startswith('.'):
-            newpath = outpath+"/"+str(folder)
-            listOfTiles = montageList(newpath)
-            weewoo = outpath+"/"+str(folder)+"/*.png"
-            woowee = "./CutFaces"+str(folder)+"/newfile.jpg"
-            print(listOfTiles)
-            # print(listOfTiles)
-            # print("\n")
-            # command = "montage @{} -geometry +0+0 ".format(weewoo,woowee)
-            # os.system(command)
-            # # command =['montage', '-geometry','+0+0',imageLocat,newFile]
-            # command = "montage -geometry +0+0 {} {}".format(imageLocat,newFile)
-            # print(newline)
-            # print(imageLocat)
-            # print(command)
-            # # os.system(command)
-            # print("Done\n")
             
 # CONVERTS PNG TILES INTO JPGS FOR REUNIFICATION
 
@@ -123,7 +113,7 @@ def findDominantColor(picture):
 
 # COMBINE THINGS TO MAKE THE PIXELS into JPG IMAGES
 
-def makeNewColors():
+def makeNewColors(startpath,outpath,gridoutpath,directory,outputs):
     for file in outputs:
         if not file.startswith('.'):
             imagepathstart = outpath +"/"+str(file)
@@ -131,24 +121,25 @@ def makeNewColors():
             for path in imagepathlist:
                 newImageName = os.path.splitext(os.path.basename(path))
                 newImageName = str(newImageName[0])+".jpg"
-                # makejpgimage(path,imagepathstart,newImageName)
+                makejpgimage(path,imagepathstart,newImageName)
                 finalizedpath = str(imagepathstart+"/"+newImageName)
                 print(finalizedpath)
-                findDominantColor(finalizedpath)
-                
+                findDominantColor(finalizedpath)          
 
+# CREATES THE NEW GRID OF TILES - PIXELART VERSION
 
-def dothing():
-    # makeFolders()
-    # startCutting()
-    # joinUp()
-    # findDominantColor("/Users/campberebe3/Desktop/averageface/CutFaces/Face394/slice_01_14.jpg")
-    # findDominantColor('faceest.jpg')
-    # makejpgimage("/Users/campberebe3/Desktop/averageface/CutFaces/Face342/slice_01_01.png","slice_01_01.png")
-    makeNewColors()
-
-
-dothing()
+def squareup(startpath,outpath,gridoutpath,directory,outputs):
+    for folder in outputs:
+        if not folder.startswith('.'):
+            montagepath = outpath + "/"+str(folder)
+            finalizedpath = os.path.basename(montagepath)
+            location = str(montagepath+"/*.jpg")
+            savepath = str(gridoutpath+"/"+finalizedpath+".jpg")
+            print(location)
+            print(savepath)
+            montagecommand = "montage -geometry +0+0 "+location+" "+savepath
+            print(montagecommand)
+            os.system(montagecommand)
 
 
         
